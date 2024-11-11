@@ -6,8 +6,12 @@ import docx
 from docx.shared import Inches
 from nltk.corpus import stopwords
 import nltk.data
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import nltk
 
 # Ensure NLTK data is downloaded
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 
 class TextProcessor:
@@ -94,6 +98,8 @@ class TextProcessor:
         return new_dict
 
 
+import matplotlib.pyplot as plt
+
 class DocumentCreator:
     @staticmethod
     def create_document(new_dict):
@@ -137,8 +143,53 @@ class DocumentCreator:
             for idx, width in enumerate(widths):
                 row.cells[idx].width = width
 
-        # saves the document
+        # save the document
         doc.save('frequency.docx')
+
+    @staticmethod
+    def generate_word_cloud(new_dict):
+        """Generates a word cloud image based on word frequency in new_dict"""
+        # Extract word frequencies for word cloud
+        word_frequencies = {key: item["Word(Total Occurrences)"] for key, item in new_dict.items()}
+
+        # Generate word cloud
+        wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_frequencies)
+
+        # Save the word cloud image
+        wordcloud.to_file("wordcloud.png")
+
+        # Optionally display the word cloud
+        plt.figure(figsize=(10, 5))
+        plt.imshow(wordcloud, interpolation='bilinear')
+        plt.axis('off')
+        plt.show()
+
+    @staticmethod
+    def generate_frequency_graph(new_dict, top_n=10):
+        """Generates a bar graph for the most frequent words"""
+        # Extract word frequencies for the graph
+        word_frequencies = {key: item["Word(Total Occurrences)"] for key, item in new_dict.items()}
+        
+        # Sort the word frequencies in descending order and take the top N
+        sorted_words = sorted(word_frequencies.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        
+        # Prepare data for plotting
+        words, counts = zip(*sorted_words)
+        
+        # Create the bar chart
+        plt.figure(figsize=(10, 5))
+        plt.bar(words, counts, color='skyblue')
+        plt.xlabel('Words')
+        plt.ylabel('Frequency')
+        plt.title(f'Top {top_n} Most Frequent Words')
+        plt.xticks(rotation=45, ha='right')
+        
+        # Save the graph
+        plt.tight_layout()
+        plt.savefig('frequency_graph.png')
+        
+        # Optionally display the graph
+        plt.show()
 
 
 def main():
@@ -151,6 +202,10 @@ def main():
     new_dict = processor.counted_values()
     # passes dictionary to be used to create document
     DocumentCreator.create_document(new_dict)
+    # Generate a word cloud based on word frequency
+    DocumentCreator.generate_word_cloud(new_dict)
+    # Generate a frequency graph for top 10 most frequent words
+    DocumentCreator.generate_frequency_graph(new_dict)
 
 
 # runs the script
